@@ -1,0 +1,44 @@
+[project]
+name = "pydantic-settings-logging"
+version = "0.1.0"
+description = "Pydantic models for Python logging configuration"
+readme = "README.md"
+authors = [
+    { name = "vduseev", email = "vagiz@duseev.com" }
+]
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Logging",
+    "Typing :: Typed",
+]
+keywords = ["pydantic", "settings", "logging", "configuration", "toml", "json"]
+dependencies = [
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "tomli>=2.0; python_version < '3.11'",
+]
+
+[project.urls]
+Homepage = "https://github.com/vduseev/pydantic-settings-logging"
+Repository = "https://github.com/vduseev/pydantic-settings-logging"
+Issues = "https://github.com/vduseev/pydantic-settings-logging/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "ruff>=0.12.1",
+]
