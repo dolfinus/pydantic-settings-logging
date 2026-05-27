@@ -11,7 +11,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import AliasChoices, BaseModel, Field, field_validator
+from pydantic import (
+    AliasChoices,
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+)
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -40,10 +46,28 @@ __all__ = [
 ]
 
 
+# https://github.com/python/cpython/blob/v3.13.9/Lib/logging/config.py#L480-L492
+class CallableFactoryConfig(BaseModel):
+    model_config = ConfigDict(extra="allow", populate_by_name=True)
+
+    callable: str = Field(
+        description="Custom callable",
+        validation_alias=AliasChoices("callable", "()"),
+        serialization_alias="()",
+    )
+
+    props: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Custom properties set on call result",
+        validation_alias=AliasChoices("props", "."),
+        serialization_alias=".",
+    )
+
+
 # Formatter Models
 class FormatterConfig(BaseModel):
     """Configuration for a logging formatter."""
-    
+
     format: str | None = Field(
         default="%(levelname)s:%(name)s:%(message)s",
         description="Format string for log messages"
@@ -76,25 +100,19 @@ class FormatterConfig(BaseModel):
 # Filter Models
 class FilterConfig(BaseModel):
     """Configuration for a logging filter."""
-    
-    name: str | None = Field(
+
+    name: str = Field(
         default="",
         description="Logger name to filter"
-    )
-    class_: str | None = Field(
-        default=None,
-        validation_alias=AliasChoices("class_", "class"),
-        serialization_alias="class",
-        description="Custom filter class"
     )
 
 
 # Handler Models
 class BaseHandlerConfig(BaseModel):
     """Base configuration for all handlers."""
-    
-    model_config = {"extra": "allow"}
-    
+
+    model_config = ConfigDict(extra="allow")
+
     class_: str = Field(
         validation_alias=AliasChoices("class_", "class"),
         serialization_alias="class",
@@ -383,13 +401,13 @@ class HTTPHandlerConfig(BaseHandlerConfig):
 
 class QueueHandlerConfig(BaseHandlerConfig):
     """Configuration for QueueHandler."""
-    
+
     class_: Literal["logging.handlers.QueueHandler"] = Field(
         default="logging.handlers.QueueHandler",
         validation_alias=AliasChoices("class_", "class"),
         serialization_alias="class"
     )
-    queue: str = Field(
+    queue: str | CallableFactoryConfig = Field(
         description="Queue object reference"
     )
 
@@ -402,7 +420,7 @@ class QueueListenerConfig(BaseHandlerConfig):
         validation_alias=AliasChoices("class_", "class"),
         serialization_alias="class"
     )
-    queue: str = Field(
+    queue: str | CallableFactoryConfig = Field(
         description="Queue object reference"
     )
     handlers: list[str] = Field(
@@ -704,7 +722,7 @@ class LoggingSettings(BaseSettings):
     4. logging.toml - TOML configuration file  
     5. logging.ini - INI configuration file (logging.config.fileConfig format)
     6. pyproject.toml [tool.logging] section (lowest priority)
-    
+
     The model_dump() method returns a dictionary that can be passed
     directly to logging.config.dictConfig().
     """
@@ -713,15 +731,18 @@ class LoggingSettings(BaseSettings):
         default=1,
         description="Configuration schema version"
     )
-    formatters: dict[str, FormatterConfig] = Field(
+    # https://github.com/python/cpython/blob/v3.13.9/Lib/logging/config.py#L688
+    formatters: dict[str, FormatterConfig | CallableFactoryConfig] = Field(
         default_factory=dict,
         description="Formatter configurations"
     )
-    filters: dict[str, FilterConfig] = Field(
+    # https://github.com/python/cpython/blob/v3.13.9/Lib/logging/config.py#L732
+    filters: dict[str, FilterConfig | CallableFactoryConfig] = Field(
         default_factory=dict,
         description="Filter configurations"
     )
-    handlers: dict[str, Any] = Field(
+    # https://github.com/python/cpython/blob/v3.13.9/Lib/logging/config.py#L768
+    handlers: dict[str, HandlerConfig | CallableFactoryConfig] = Field(
         default_factory=dict,
         description="Handler configurations"
     )

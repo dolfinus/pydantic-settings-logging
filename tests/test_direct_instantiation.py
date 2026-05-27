@@ -1,7 +1,6 @@
 """Test direct instantiation of models with class_ field."""
 
 import pytest
-from pydantic import ValidationError
 
 from pydantic_settings_logging import (
     BaseHandlerConfig,
@@ -64,14 +63,13 @@ def test_formatter_config_direct_instantiation():
 
 def test_filter_config_direct_instantiation():
     """Test that FilterConfig can be instantiated directly with class_ parameter."""
-    # Should work with field name (class_)
-    filter_config = FilterConfig(class_="logging.Filter")
-    assert filter_config.class_ == "logging.Filter"
+    # Should work with field name
+    filter_config = FilterConfig(name="A.B")
+    assert filter_config.name == "A.B"
     
-    # Should serialize with alias (class) when using by_alias=True
+    # Should serialize
     data = filter_config.model_dump(by_alias=True)
-    assert data["class"] == "logging.Filter"
-    assert "class_" not in data
+    assert data["name"] == "A.B"
 
 
 def test_config_from_dict_with_alias():
@@ -134,7 +132,7 @@ def test_mixed_instantiation_styles():
         "delay": False
     }
     assert data == expected
-    
+
     # Recreate from dict (should use aliases)
     handler2 = FileHandlerConfig.model_validate(data)
     assert handler2.class_ == "logging.FileHandler"
